@@ -10,9 +10,9 @@ node --version
 echo "NPM version:"
 npm --version
 
-# Install only Node.js dependencies
+# Install all dependencies (including dev dependencies for build)
 echo "Installing Node.js dependencies..."
-npm install --production --no-optional
+npm install
 
 # Build the frontend
 echo "Building frontend..."
