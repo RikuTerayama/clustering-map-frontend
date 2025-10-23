@@ -18,4 +18,13 @@ npm install
 echo "Building frontend..."
 npm run build
 
+# Check if dist directory exists
+if [ -d "dist" ]; then
+    echo "Build successful! dist directory created."
+    ls -la dist/
+else
+    echo "ERROR: dist directory not found!"
+    exit 1
+fi
+
 echo "Frontend build completed successfully!"
