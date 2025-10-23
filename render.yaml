@@ -1,0 +1,17 @@
+services:
+  # フロントエンド専用
+  - type: static
+    name: clustering-map-frontend
+    region: oregon
+    plan: free
+    buildCommand: |
+      chmod +x build.sh
+      ./build.sh
+    publishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://clustering-map-api.onrender.com
+      - key: NODE_ENV
+        value: production
+      - key: NPM_CONFIG_PRODUCTION
+        value: true
