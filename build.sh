@@ -14,9 +14,9 @@ npm --version
 echo "Installing Node.js dependencies..."
 npm install
 
-# Build the frontend using npx to ensure Vite is available
+# Build the frontend using npm run build (which uses local packages)
 echo "Building frontend..."
-npx tsc && npx vite build
+npm run build
 
 # Check if dist directory exists
 if [ -d "dist" ]; then
