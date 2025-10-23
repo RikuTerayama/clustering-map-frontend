@@ -42,5 +42,4 @@
     "../docker-compose*",
     "../render.yaml"
   ],
-  "references": [{ "path": "./tsconfig.node.json" }]
 }
