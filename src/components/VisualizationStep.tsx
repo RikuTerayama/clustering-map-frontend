@@ -92,7 +92,7 @@ export const VisualizationStep: React.FC<VisualizationStepProps> = ({
     }))
 
     // クラスタの中心を追加
-    const clusterCenters = Object.entries(analysisResult.clusters).map(([clusterId, cluster]) => ({
+    const clusterCenters = Object.entries(analysisResult.clusters).map(([clusterId, cluster]: [string, any]) => ({
       name: `中心 ${clusterId}`,
       type: 'scatter',
       data: [[cluster.center_x, cluster.center_y, `center_${clusterId}`, '', []]],
