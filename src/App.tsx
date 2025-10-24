@@ -44,11 +44,6 @@ function App() {
     setCurrentStep('tags')
   }
 
-  const handleTagsComplete = (request: AnalysisRequest) => {
-    setAnalysisRequest(request)
-    setCurrentStep('analysis')
-  }
-
   const handleAnalysisComplete = (result: AnalysisResult) => {
     setAnalysisResult(result)
     setCurrentStep('visualization')
@@ -85,10 +80,10 @@ function App() {
           />
         )}
         
-        {currentStep === 'tags' && analysisRequest && (
+        {currentStep === 'tags' && analysisRequest && uploadData && (
           <TagEditingStep
-            analysisRequest={analysisRequest}
-            onComplete={handleTagsComplete}
+            tagCandidates={uploadData.tag_candidates}
+            onComplete={() => setCurrentStep('analysis')}
             onBack={() => setCurrentStep('mapping')}
             isLoading={isLoading}
             setIsLoading={setIsLoading}
@@ -97,7 +92,7 @@ function App() {
         
         {currentStep === 'analysis' && analysisRequest && (
           <AnalysisStep
-            analysisRequest={analysisRequest}
+            columnMapping={analysisRequest.column_mapping}
             onComplete={handleAnalysisComplete}
             onBack={() => setCurrentStep('tags')}
             isLoading={isLoading}
@@ -109,7 +104,8 @@ function App() {
           <VisualizationStep
             analysisResult={analysisResult}
             onBack={() => setCurrentStep('analysis')}
-            onReset={resetApp}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
           />
         )}
       </main>
