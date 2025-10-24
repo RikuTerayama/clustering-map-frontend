@@ -4,7 +4,7 @@ import { TagCandidate } from '../types'
 
 interface TagEditingStepProps {
   tagCandidates: TagCandidate[]
-  onComplete: () => void
+  onComplete: (tagRules: any[]) => void
   onBack: () => void
   isLoading: boolean
   setIsLoading: (loading: boolean) => void
@@ -55,7 +55,7 @@ export const TagEditingStep: React.FC<TagEditingStepProps> = ({
 
   const handleNext = () => {
     // タグの保存処理（実際の実装ではAPIを呼び出し）
-    onComplete()
+    onComplete(tags)
   }
 
   const filteredTags = tags.filter(tag => 
