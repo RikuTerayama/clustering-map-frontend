@@ -30,6 +30,12 @@ export interface TagCandidate {
   count: number
 }
 
+export interface TagRule {
+  key: string
+  synonyms: string[]
+  category?: string
+}
+
 export interface ColumnMapping {
   text_column: string
   id_column: string
@@ -48,7 +54,7 @@ export interface UploadResponse {
 
 export interface AnalysisRequest {
   column_mapping: ColumnMapping
-  tag_rules: any[]
+  tag_rules: TagRule[]
   cluster_method: 'hdbscan' | 'kmeans' | 'dbscan'
   hdbscan_params: Record<string, any>
   kmeans_params: Record<string, any>
