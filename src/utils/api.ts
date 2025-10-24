@@ -15,10 +15,24 @@ const getApiUrl = (): string => {
 
 const API_BASE_URL = getApiUrl()
 
+console.log('API Base URL:', API_BASE_URL)
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
 })
+
+// ヘルスチェック
+export const checkHealth = async (): Promise<boolean> => {
+  try {
+    const response = await api.get('/health')
+    console.log('Health check response:', response.data)
+    return response.status === 200
+  } catch (error) {
+    console.error('Health check failed:', error)
+    return false
+  }
+}
 
 // ファイルアップロード
 export const uploadFile = async (file: File): Promise<UploadResponse> => {
@@ -130,6 +144,17 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error('API Error:', error)
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      response: error.response?.data,
+      status: error.response?.status,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        baseURL: error.config?.baseURL
+      }
+    })
     
     if (error.response) {
       // サーバーからのエラーレスポンス
@@ -141,6 +166,8 @@ api.interceptors.response.use(
       // リクエストが送信されなかった
       console.error('Network Error:', error.request)
       console.error('API Base URL:', API_BASE_URL)
+      console.error('Request URL:', error.config?.url)
+      console.error('Full URL:', `${API_BASE_URL}${error.config?.url}`)
       throw new Error(`ネットワークエラー: サーバーに接続できません (${API_BASE_URL})`)
     } else {
       // その他のエラー
