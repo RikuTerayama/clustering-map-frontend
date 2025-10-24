@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Play, Settings, BarChart3 } from 'lucide-react'
 import { analyzeData } from '../utils/api'
 import { ColumnMapping, AnalysisRequest } from '../types'
 import { ShapeSelector, ShapeType } from './ShapeSelector'
+import { StatusDisplay, useStatusManager } from './StatusDisplay'
 
 interface AnalysisStepProps {
   analysisRequest: AnalysisRequest
@@ -33,10 +34,14 @@ export const AnalysisStep: React.FC<AnalysisStepProps> = ({
   })
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [selectedShape, setSelectedShape] = useState<ShapeType>('circle')
+  const { statuses, addStatus, clearStatuses } = useStatusManager()
 
   const handleAnalyze = async () => {
     try {
+      clearStatuses()
       setIsLoading(true)
+      
+      addStatus('解析を開始しています...', 'loading')
       
       const request: AnalysisRequest = {
         ...analysisRequest,
@@ -47,11 +52,19 @@ export const AnalysisStep: React.FC<AnalysisStepProps> = ({
         shape_mask_path: selectedShape // 図形情報を追加
       }
 
+      addStatus('リクエストを準備しました', 'info')
+      console.log('Analysis request:', request)
+
+      addStatus('サーバーに解析リクエストを送信中...', 'loading')
       const result = await analyzeData(request)
+      
+      addStatus('解析が完了しました', 'success')
+      console.log('Analysis result:', result)
+      
       onComplete(result)
     } catch (error) {
       console.error('Analysis failed:', error)
-      // エラーハンドリング
+      addStatus(`解析に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`, 'error')
     } finally {
       setIsLoading(false)
     }
@@ -286,6 +299,13 @@ export const AnalysisStep: React.FC<AnalysisStepProps> = ({
           </div>
         </div>
       </div>
+
+      {/* ステータス表示 */}
+      {statuses.length > 0 && (
+        <div className="mt-8">
+          <StatusDisplay statuses={statuses} title="解析ステータス" />
+        </div>
+      )}
 
       {/* ヘルプ情報 */}
       <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
