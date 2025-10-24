@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback } from 'react'
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download, Info } from 'lucide-react'
 import { uploadFile, downloadTemplate, checkHealth } from '../utils/api'
 import { UploadResponse } from '../types'
@@ -21,19 +21,19 @@ export const UploadStep: React.FC<UploadStepProps> = ({
   const [uploadProgress, setUploadProgress] = useState<string>('')
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking')
 
-  // サーバーのヘルスチェック
-  useEffect(() => {
-    const checkServerHealth = async () => {
+  // サーバーの状態をチェック
+  React.useEffect(() => {
+    const checkServer = async () => {
       try {
         const isHealthy = await checkHealth()
         setServerStatus(isHealthy ? 'online' : 'offline')
       } catch (error) {
-        console.error('Health check failed:', error)
+        console.error('Server health check failed:', error)
         setServerStatus('offline')
       }
     }
     
-    checkServerHealth()
+    checkServer()
   }, [])
 
   const progressSteps = [
@@ -145,24 +145,24 @@ export const UploadStep: React.FC<UploadStepProps> = ({
           Excelファイル（.xlsx）をアップロードして、アンケート結果の解析を開始します。
         </p>
         
-        {/* サーバーステータス表示 */}
+        {/* サーバー状態表示 */}
         <div className="mb-6 flex justify-center">
           {serverStatus === 'checking' && (
             <div className="flex items-center text-blue-600">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-              サーバー接続を確認中...
+              <span className="text-sm">サーバー状態を確認中...</span>
             </div>
           )}
           {serverStatus === 'online' && (
             <div className="flex items-center text-green-600">
               <CheckCircle className="w-4 h-4 mr-2" />
-              サーバーに接続済み
+              <span className="text-sm">サーバーに接続済み</span>
             </div>
           )}
           {serverStatus === 'offline' && (
             <div className="flex items-center text-red-600">
               <AlertCircle className="w-4 h-4 mr-2" />
-              サーバーに接続できません
+              <span className="text-sm">サーバーに接続できません</span>
             </div>
           )}
         </div>
