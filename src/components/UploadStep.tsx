@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react'
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle } from 'lucide-react'
-import { uploadFile } from '../utils/api'
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download, Info } from 'lucide-react'
+import { uploadFile, downloadTemplate } from '../utils/api'
 import { UploadResponse } from '../types'
+import { ProgressIndicator } from './ProgressIndicator'
 
 interface UploadStepProps {
   onComplete: (data: UploadResponse) => void
@@ -17,6 +18,34 @@ export const UploadStep: React.FC<UploadStepProps> = ({
   const [dragActive, setDragActive] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<string>('')
+
+  const progressSteps = [
+    {
+      id: 'file-selection',
+      title: 'ファイル選択',
+      description: 'Excelファイルを選択またはドラッグ&ドロップ',
+      status: uploadedFile ? 'completed' : 'current' as const
+    },
+    {
+      id: 'file-validation',
+      title: 'ファイル検証',
+      description: 'ファイル形式とサイズをチェック',
+      status: uploadedFile && !isLoading ? 'completed' : uploadedFile && isLoading ? 'current' : 'pending' as const
+    },
+    {
+      id: 'upload',
+      title: 'アップロード',
+      description: 'サーバーにファイルを送信中',
+      status: isLoading ? 'current' : uploadedFile ? 'completed' : 'pending' as const
+    },
+    {
+      id: 'processing',
+      title: 'データ処理',
+      description: 'ファイル内容を解析中',
+      status: isLoading ? 'current' : 'pending' as const
+    }
+  ]
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -47,6 +76,7 @@ export const UploadStep: React.FC<UploadStepProps> = ({
   const handleFile = async (file: File) => {
     setError(null)
     setUploadedFile(file)
+    setUploadProgress('ファイルを検証中...')
 
     // ファイル形式の検証
     const allowedTypes = [
@@ -56,36 +86,77 @@ export const UploadStep: React.FC<UploadStepProps> = ({
     
     if (!allowedTypes.includes(file.type)) {
       setError('Excelファイル（.xlsx, .xls）をアップロードしてください。')
+      setUploadProgress('')
       return
     }
 
     // ファイルサイズの検証（50MB制限）
     if (file.size > 50 * 1024 * 1024) {
       setError('ファイルサイズが大きすぎます。50MB以下のファイルをアップロードしてください。')
+      setUploadProgress('')
       return
     }
 
     try {
       setIsLoading(true)
+      setUploadProgress('サーバーにアップロード中...')
+      
+      console.log('Uploading file:', file.name, 'Size:', file.size, 'Type:', file.type)
+      console.log('API Base URL:', import.meta.env.VITE_API_URL || 'https://clustering-map-api.onrender.com')
+      
       const response = await uploadFile(file)
+      setUploadProgress('データを処理中...')
+      
+      console.log('Upload response:', response)
       onComplete(response)
+      setUploadProgress('完了！')
     } catch (err) {
+      console.error('Upload error:', err)
       setError(err instanceof Error ? err.message : 'ファイルのアップロードに失敗しました。')
+      setUploadProgress('')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">
           ファイルアップロード
         </h2>
-        <p className="text-lg text-gray-600">
+        <p className="text-lg text-gray-600 mb-6">
           Excelファイル（.xlsx）をアップロードして、アンケート結果の解析を開始します。
         </p>
+        
+        <div className="flex justify-center gap-4 mb-6">
+          <button
+            onClick={downloadTemplate}
+            className="btn btn-secondary flex items-center"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            テンプレートをダウンロード
+          </button>
+        </div>
       </div>
+
+      {/* 進捗表示 */}
+      {(uploadedFile || isLoading) && (
+        <ProgressIndicator
+          steps={progressSteps}
+          currentStep={isLoading ? 'upload' : 'file-selection'}
+          error={error || undefined}
+        />
+      )}
+
+      {uploadProgress && (
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center">
+            <Info className="w-5 h-5 text-blue-500 mr-3" />
+            <span className="text-blue-800">{uploadProgress}</span>
+          </div>
+        </div>
+      )}
 
       <div className="card">
         <div
