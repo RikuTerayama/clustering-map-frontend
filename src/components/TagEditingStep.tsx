@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { ArrowLeft, ArrowRight, Edit3, Trash2, Plus, Tag } from 'lucide-react'
-import { TagCandidate } from '../types'
+import { TagCandidate, TagRule } from '../types'
 
 interface TagEditingStepProps {
   tagCandidates: TagCandidate[]
-  onComplete: (tagRules: any[]) => void
+  onComplete: (tagRules: TagRule[]) => void
   onBack: () => void
   isLoading: boolean
   setIsLoading: (loading: boolean) => void
@@ -54,8 +54,14 @@ export const TagEditingStep: React.FC<TagEditingStepProps> = ({
   }
 
   const handleNext = () => {
-    // タグの保存処理（実際の実装ではAPIを呼び出し）
-    onComplete(tags)
+    // TagCandidateをTagRuleに変換
+    const tagRules: TagRule[] = tags.map(tag => ({
+      key: tag.text,
+      synonyms: [tag.text], // 基本的には同じテキストを同義語として設定
+      category: tag.category || 'その他'
+    }))
+    
+    onComplete(tagRules)
   }
 
   const filteredTags = tags.filter(tag => 
