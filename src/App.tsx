@@ -1,13 +1,12 @@
 import React, { useState } from 'react'
 import { Header } from './components/Header'
 import { UploadStep } from './components/UploadStep'
-import { ColumnMappingStep } from './components/ColumnMappingStep'
 import { TagEditingStep } from './components/TagEditingStep'
 import { AnalysisStep } from './components/AnalysisStep'
 import { VisualizationStep } from './components/VisualizationStep'
-import { UploadResponse, AnalysisRequest, AnalysisResult, ColumnMapping } from './types'
+import { UploadResponse, AnalysisRequest, AnalysisResult } from './types'
 
-type Step = 'upload' | 'mapping' | 'tags' | 'analysis' | 'visualization'
+type Step = 'upload' | 'tags' | 'analysis' | 'visualization'
 
 function App() {
   const [currentStep, setCurrentStep] = useState<Step>('upload')
@@ -18,29 +17,7 @@ function App() {
 
   const handleUploadComplete = (data: UploadResponse) => {
     setUploadData(data)
-    setCurrentStep('mapping')
-  }
-
-  const handleMappingComplete = (mapping: ColumnMapping) => {
-    // ColumnMappingからAnalysisRequestを作成
-    const request: AnalysisRequest = {
-      column_mapping: mapping,
-      tag_rules: [],
-      cluster_method: 'hdbscan',
-      hdbscan_params: {
-        min_cluster_size: 15,
-        min_samples: 5
-      },
-      kmeans_params: {
-        n_clusters: 8
-      },
-      umap_params: {
-        n_neighbors: 15,
-        min_dist: 0.1,
-        random_state: 42
-      }
-    }
-    setAnalysisRequest(request)
+    // 自動的にタグ生成ステップに進む
     setCurrentStep('tags')
   }
 
@@ -69,22 +46,36 @@ function App() {
           />
         )}
         
-        {currentStep === 'mapping' && uploadData && (
-          <ColumnMappingStep
-            columns={uploadData.columns}
-            sampleData={uploadData.sample_data}
-            onComplete={handleMappingComplete}
-            onBack={() => setCurrentStep('upload')}
-            isLoading={isLoading}
-            setIsLoading={setIsLoading}
-          />
-        )}
-        
-        {currentStep === 'tags' && analysisRequest && uploadData && (
+        {currentStep === 'tags' && uploadData && (
           <TagEditingStep
             tagCandidates={uploadData.tag_candidates}
-            onComplete={() => setCurrentStep('analysis')}
-            onBack={() => setCurrentStep('mapping')}
+            onComplete={(tagRules) => {
+              // デフォルトのAnalysisRequestを作成
+              const request: AnalysisRequest = {
+                column_mapping: {
+                  text_column: uploadData.columns[0] || '自由記述',
+                  id_column: '',
+                  group_column: ''
+                },
+                tag_rules: tagRules,
+                cluster_method: 'hdbscan',
+                hdbscan_params: {
+                  min_cluster_size: 15,
+                  min_samples: 5
+                },
+                kmeans_params: {
+                  n_clusters: 8
+                },
+                umap_params: {
+                  n_neighbors: 15,
+                  min_dist: 0.1,
+                  random_state: 42
+                }
+              }
+              setAnalysisRequest(request)
+              setCurrentStep('analysis')
+            }}
+            onBack={() => setCurrentStep('upload')}
             isLoading={isLoading}
             setIsLoading={setIsLoading}
           />
