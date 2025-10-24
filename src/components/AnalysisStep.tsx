@@ -2,9 +2,10 @@ import React, { useState } from 'react'
 import { ArrowLeft, ArrowRight, Play, Settings, BarChart3 } from 'lucide-react'
 import { analyzeData } from '../utils/api'
 import { ColumnMapping, AnalysisRequest } from '../types'
+import { ShapeSelector, ShapeType } from './ShapeSelector'
 
 interface AnalysisStepProps {
-  columnMapping: ColumnMapping
+  analysisRequest: AnalysisRequest
   onComplete: (result: any) => void
   onBack: () => void
   isLoading: boolean
@@ -12,7 +13,7 @@ interface AnalysisStepProps {
 }
 
 export const AnalysisStep: React.FC<AnalysisStepProps> = ({
-  columnMapping,
+  analysisRequest,
   onComplete,
   onBack,
   isLoading,
@@ -31,18 +32,19 @@ export const AnalysisStep: React.FC<AnalysisStepProps> = ({
     min_dist: 0.1
   })
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [selectedShape, setSelectedShape] = useState<ShapeType>('circle')
 
   const handleAnalyze = async () => {
     try {
       setIsLoading(true)
       
       const request: AnalysisRequest = {
-        column_mapping: columnMapping,
-        tag_rules: [], // 実際の実装ではタグルールを取得
+        ...analysisRequest,
         cluster_method: clusterMethod,
         hdbscan_params: hdbscanParams,
         kmeans_params: kmeansParams,
-        umap_params: umapParams
+        umap_params: umapParams,
+        shape_mask_path: selectedShape // 図形情報を追加
       }
 
       const result = await analyzeData(request)
@@ -73,6 +75,14 @@ export const AnalysisStep: React.FC<AnalysisStepProps> = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* 図形選択 */}
+        <div className="card">
+          <ShapeSelector
+            selectedShape={selectedShape}
+            onShapeChange={setSelectedShape}
+          />
+        </div>
+
         {/* 解析設定 */}
         <div className="card">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">
