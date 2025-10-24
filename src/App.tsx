@@ -1,16 +1,118 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { Header } from './components/Header'
+import { UploadStep } from './components/UploadStep'
+import { ColumnMappingStep } from './components/ColumnMappingStep'
+import { TagEditingStep } from './components/TagEditingStep'
+import { AnalysisStep } from './components/AnalysisStep'
+import { VisualizationStep } from './components/VisualizationStep'
+import { UploadResponse, AnalysisRequest, AnalysisResult, ColumnMapping } from './types'
+
+type Step = 'upload' | 'mapping' | 'tags' | 'analysis' | 'visualization'
 
 function App() {
+  const [currentStep, setCurrentStep] = useState<Step>('upload')
+  const [isLoading, setIsLoading] = useState(false)
+  const [uploadData, setUploadData] = useState<UploadResponse | null>(null)
+  const [analysisRequest, setAnalysisRequest] = useState<AnalysisRequest | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
+
+  const handleUploadComplete = (data: UploadResponse) => {
+    setUploadData(data)
+    setCurrentStep('mapping')
+  }
+
+  const handleMappingComplete = (mapping: ColumnMapping) => {
+    // ColumnMappingからAnalysisRequestを作成
+    const request: AnalysisRequest = {
+      column_mapping: mapping,
+      tag_rules: [],
+      cluster_method: 'hdbscan',
+      hdbscan_params: {
+        min_cluster_size: 15,
+        min_samples: 5
+      },
+      kmeans_params: {
+        n_clusters: 8
+      },
+      umap_params: {
+        n_neighbors: 15,
+        min_dist: 0.1,
+        random_state: 42
+      }
+    }
+    setAnalysisRequest(request)
+    setCurrentStep('tags')
+  }
+
+  const handleTagsComplete = (request: AnalysisRequest) => {
+    setAnalysisRequest(request)
+    setCurrentStep('analysis')
+  }
+
+  const handleAnalysisComplete = (result: AnalysisResult) => {
+    setAnalysisResult(result)
+    setCurrentStep('visualization')
+  }
+
+  const resetApp = () => {
+    setCurrentStep('upload')
+    setUploadData(null)
+    setAnalysisRequest(null)
+    setAnalysisResult(null)
+  }
+
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">
-          Clustering Map
-        </h1>
-        <p className="text-gray-600">
-          Frontend is working! Backend integration coming soon.
-        </p>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {currentStep === 'upload' && (
+          <UploadStep
+            onComplete={handleUploadComplete}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+          />
+        )}
+        
+        {currentStep === 'mapping' && uploadData && (
+          <ColumnMappingStep
+            columns={uploadData.columns}
+            sampleData={uploadData.sample_data}
+            onComplete={handleMappingComplete}
+            onBack={() => setCurrentStep('upload')}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+          />
+        )}
+        
+        {currentStep === 'tags' && analysisRequest && (
+          <TagEditingStep
+            analysisRequest={analysisRequest}
+            onComplete={handleTagsComplete}
+            onBack={() => setCurrentStep('mapping')}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+          />
+        )}
+        
+        {currentStep === 'analysis' && analysisRequest && (
+          <AnalysisStep
+            analysisRequest={analysisRequest}
+            onComplete={handleAnalysisComplete}
+            onBack={() => setCurrentStep('tags')}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+          />
+        )}
+        
+        {currentStep === 'visualization' && analysisResult && (
+          <VisualizationStep
+            analysisResult={analysisResult}
+            onBack={() => setCurrentStep('analysis')}
+            onReset={resetApp}
+          />
+        )}
+      </main>
     </div>
   )
 }
