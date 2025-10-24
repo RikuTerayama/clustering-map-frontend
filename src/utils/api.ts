@@ -68,20 +68,83 @@ export const exportPNG = async (): Promise<Blob> => {
   return response.data
 }
 
+// テンプレートダウンロード
+export const downloadTemplate = (): void => {
+  // サンプルデータを作成
+  const sampleData = [
+    {
+      'ID': 1,
+      '回答者': 'Aさん',
+      '自由記述': 'このサービスはとても使いやすく、機能も充実しています。特にUIが分かりやすいのが良いです。',
+      'グループ': '満足'
+    },
+    {
+      'ID': 2,
+      '回答者': 'Bさん',
+      '自由記述': '料金が少し高いと感じます。もう少し安くなれば利用したいです。',
+      'グループ': '不満'
+    },
+    {
+      'ID': 3,
+      '回答者': 'Cさん',
+      '自由記述': 'サポートが丁寧で、問題がすぐに解決されました。ありがとうございます。',
+      'グループ': '満足'
+    },
+    {
+      'ID': 4,
+      '回答者': 'Dさん',
+      '自由記述': '機能は良いのですが、もう少しシンプルな操作ができると良いです。',
+      'グループ': '改善要望'
+    },
+    {
+      'ID': 5,
+      '回答者': 'Eさん',
+      '自由記述': '全体的に満足しています。継続して利用したいと思います。',
+      'グループ': '満足'
+    }
+  ]
+
+  // CSV形式でダウンロード
+  const headers = ['ID', '回答者', '自由記述', 'グループ']
+  const csvContent = [
+    headers.join(','),
+    ...sampleData.map(row => 
+      headers.map(header => `"${row[header as keyof typeof row]}"`).join(',')
+    )
+  ].join('\n')
+
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  link.setAttribute('href', url)
+  link.setAttribute('download', 'clustering_map_template.csv')
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
 // エラーハンドリング
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.error('API Error:', error)
+    
     if (error.response) {
       // サーバーからのエラーレスポンス
-      const message = error.response.data?.message || 'サーバーエラーが発生しました'
-      throw new Error(message)
+      const status = error.response.status
+      const message = error.response.data?.message || error.response.data?.detail || 'サーバーエラーが発生しました'
+      console.error(`Server Error ${status}:`, message)
+      throw new Error(`${status}: ${message}`)
     } else if (error.request) {
       // リクエストが送信されなかった
-      throw new Error('ネットワークエラーが発生しました')
+      console.error('Network Error:', error.request)
+      console.error('API Base URL:', API_BASE_URL)
+      throw new Error(`ネットワークエラー: サーバーに接続できません (${API_BASE_URL})`)
     } else {
       // その他のエラー
-      throw new Error('予期しないエラーが発生しました')
+      console.error('Unknown Error:', error.message)
+      throw new Error(`予期しないエラー: ${error.message}`)
     }
   }
 )
