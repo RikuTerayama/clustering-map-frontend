@@ -15,24 +15,10 @@ const getApiUrl = (): string => {
 
 const API_BASE_URL = getApiUrl()
 
-console.log('API Base URL:', API_BASE_URL)
-
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
 })
-
-// ヘルスチェック
-export const checkHealth = async (): Promise<boolean> => {
-  try {
-    const response = await api.get('/health')
-    console.log('Health check response:', response.data)
-    return response.status === 200
-  } catch (error) {
-    console.error('Health check failed:', error)
-    return false
-  }
-}
 
 // ファイルアップロード
 export const uploadFile = async (file: File): Promise<UploadResponse> => {
@@ -83,6 +69,17 @@ export const exportPNG = async (): Promise<Blob> => {
 }
 
 // テンプレートダウンロード
+export const checkHealth = async (): Promise<boolean> => {
+  try {
+    const response = await api.get('/health')
+    console.log('Health check response:', response.data)
+    return response.data.status === 'healthy'
+  } catch (error) {
+    console.error('Health check failed:', error)
+    return false
+  }
+}
+
 export const downloadTemplate = async (): Promise<void> => {
   try {
     console.log('Downloading template from backend...')
@@ -166,9 +163,19 @@ api.interceptors.response.use(
       // リクエストが送信されなかった
       console.error('Network Error:', error.request)
       console.error('API Base URL:', API_BASE_URL)
-      console.error('Request URL:', error.config?.url)
-      console.error('Full URL:', `${API_BASE_URL}${error.config?.url}`)
-      throw new Error(`ネットワークエラー: サーバーに接続できません (${API_BASE_URL})`)
+      console.error('Error code:', error.code)
+      
+      // より詳細なエラーメッセージ
+      let errorMessage = `ネットワークエラー: サーバーに接続できません (${API_BASE_URL})`
+      if (error.code === 'ECONNREFUSED') {
+        errorMessage = `接続が拒否されました。サーバーが起動していない可能性があります。`
+      } else if (error.code === 'ENOTFOUND') {
+        errorMessage = `サーバーが見つかりません。URLを確認してください。`
+      } else if (error.code === 'ETIMEDOUT') {
+        errorMessage = `接続がタイムアウトしました。サーバーの応答が遅い可能性があります。`
+      }
+      
+      throw new Error(errorMessage)
     } else {
       // その他のエラー
       console.error('Unknown Error:', error.message)
