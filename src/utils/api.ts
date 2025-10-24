@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { UploadResponse, AnalysisRequest, AnalysisResult, TagCandidate } from '../types'
 
-const API_BASE_URL = '/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://clustering-map-api.onrender.com'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
