@@ -69,48 +69,49 @@ export const exportPNG = async (): Promise<Blob> => {
 }
 
 // テンプレートダウンロード
-export const downloadTemplate = (): void => {
-  // サンプルデータを作成
+export const downloadTemplate = async (): Promise<void> => {
+  try {
+    console.log('Downloading template from backend...')
+    const response = await api.get('/template', {
+      responseType: 'blob',
+    })
+    
+    const blob = new Blob([response.data], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    })
+    
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', 'clustering_map_template.xlsx')
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    
+    console.log('Template downloaded successfully')
+    
+  } catch (error) {
+    console.error('Template download error:', error)
+    // フォールバック: CSV形式でダウンロード
+    downloadTemplateCSV()
+  }
+}
+
+// フォールバック用のCSVダウンロード
+const downloadTemplateCSV = (): void => {
   const sampleData = [
-    {
-      'ID': 1,
-      '回答者': 'Aさん',
-      '自由記述': 'このサービスはとても使いやすく、機能も充実しています。特にUIが分かりやすいのが良いです。',
-      'グループ': '満足'
-    },
-    {
-      'ID': 2,
-      '回答者': 'Bさん',
-      '自由記述': '料金が少し高いと感じます。もう少し安くなれば利用したいです。',
-      'グループ': '不満'
-    },
-    {
-      'ID': 3,
-      '回答者': 'Cさん',
-      '自由記述': 'サポートが丁寧で、問題がすぐに解決されました。ありがとうございます。',
-      'グループ': '満足'
-    },
-    {
-      'ID': 4,
-      '回答者': 'Dさん',
-      '自由記述': '機能は良いのですが、もう少しシンプルな操作ができると良いです。',
-      'グループ': '改善要望'
-    },
-    {
-      'ID': 5,
-      '回答者': 'Eさん',
-      '自由記述': '全体的に満足しています。継続して利用したいと思います。',
-      'グループ': '満足'
-    }
+    'このサービスはとても使いやすく、機能も充実しています。特にUIが分かりやすいのが良いです。',
+    '料金が少し高いと感じます。もう少し安くなれば利用したいです。',
+    'サポートが丁寧で、問題がすぐに解決されました。ありがとうございます。',
+    '機能は良いのですが、もう少しシンプルな操作ができると良いです。',
+    '全体的に満足しています。継続して利用したいと思います。'
   ]
 
-  // CSV形式でダウンロード
-  const headers = ['ID', '回答者', '自由記述', 'グループ']
   const csvContent = [
-    headers.join(','),
-    ...sampleData.map(row => 
-      headers.map(header => `"${row[header as keyof typeof row]}"`).join(',')
-    )
+    '自由記述',
+    ...sampleData.map(text => `"${text}"`)
   ].join('\n')
 
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
