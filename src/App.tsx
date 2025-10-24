@@ -83,7 +83,7 @@ function App() {
         
         {currentStep === 'analysis' && analysisRequest && (
           <AnalysisStep
-            columnMapping={analysisRequest.column_mapping}
+            analysisRequest={analysisRequest}
             onComplete={handleAnalysisComplete}
             onBack={() => setCurrentStep('tags')}
             isLoading={isLoading}
