@@ -1,7 +1,19 @@
 import axios from 'axios'
 import { UploadResponse, AnalysisRequest, AnalysisResult, TagCandidate } from '../types'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://clustering-map-api.onrender.com'
+// 環境変数からAPI URLを取得（Vite環境変数）
+const getApiUrl = (): string => {
+  try {
+    // Vite環境変数の型定義を回避
+    const env = (import.meta as any).env
+    return env?.VITE_API_URL || 'https://clustering-map-api.onrender.com'
+  } catch (error) {
+    // フォールバック
+    return 'https://clustering-map-api.onrender.com'
+  }
+}
+
+const API_BASE_URL = getApiUrl()
 
 const api = axios.create({
   baseURL: API_BASE_URL,
